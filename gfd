@@ -10,22 +10,17 @@ cv2.startWindowThread()
 cap = cv2.VideoCapture(0)
 from scipy.spatial.distance import cosine
 from matplotlib import pyplot as plt
-out = cv2.VideoWriter(
-    'output.avi',
-    cv2.VideoWriter_fourcc(*'MJPG'),
-    15.,
-    (640, 480))
 
 
 # extract a single face from a given photograph
-def extract_face(faceimg, required_size=(224, 224)):
-    global g
+def extract_face(faceimg, required_size=(224, 224)): #функция выделяет квадрат лица из фото
+    global g   #переменная нужна для того, чтобы проверять есть ли лицо в кадре
     print(type(faceimg))
         #if type(faceimg) == str:
             #pixels = pyplot.imread(faceimg)
         #else:
     pixels = faceimg
-    detector = MTCNN()
+    detector = MTCNN() #MTCNN распознает лицо
 
     results = detector.detect_faces(pixels)
     if results != []:
@@ -37,7 +32,7 @@ def extract_face(faceimg, required_size=(224, 224)):
         image = Image.fromarray(face)
         image = image.resize(required_size)
         face_array = asarray(image)
-        return face_array
+        return face_array   #возвращает квадрат лица
     else:
         face = pixels[0:1, 0:1]
 
@@ -45,7 +40,7 @@ def extract_face(faceimg, required_size=(224, 224)):
         image = image.resize(required_size)
         face_array = asarray(image)
         g = 1
-        return face_array
+        return face_array #возвращает несколько пикселей, нужно лишь для того, чтобы отсеивать кадр без лиц
 
 def get_model_scores(faces):
     global g
@@ -63,20 +58,20 @@ def get_model_scores(faces):
           pooling='avg')
 
         # perform prediction
-        return model.predict(samples)
+        return model.predict(samples) # возвращает черты лица в векторной форме
 
 while True:
     g = 0
-    img, frame = cap.read()
+    img, frame = cap.read()  #переменная frame получает кадр с камеры
     #out.write(frame.astype('uint8'))
     #pixels = extract_face(frame)
-    directory = 'FACE0'
-    files = os.listdir(directory)
+    directory = 'FACE0'  #дериктория в которой хранятся лица
+    files = os.listdir(directory)  #список названия файлом лиц
     print(files)
     for i in files:
-        l = pyplot.imread('./FACE0/' + i)
+        l = pyplot.imread('./FACE0/' + i)  #из названия получает саму фотку
         faces = [extract_face(faceimg)
-                 for faceimg in [frame, l]]
+                 for faceimg in [frame, l]]  #отправляет кадр и фото из папки в функцию extract_face
         #print(faces)
         #print(faces[0])
         #if None not in faces:
@@ -85,24 +80,11 @@ while True:
         #help2 = faces[1]
         #print(help2)
         if g != 1:
-            model_scores = get_model_scores(faces)
-            if cosine(model_scores[0], model_scores[1]) <= 0.4:
-                print("Faces Matched")
+            model_scores = get_model_scores(faces) #отправляет список фото лиц, которые уже прошли через функцию extract_face
+            if cosine(model_scores[0], model_scores[1]) <= 0.4: #Функция вычисляет расстояние между двумя косинуса векторов. Чем меньше чесло тем лучше он распознает лица
+                print("Faces Matched") #вывод лица совпали
             else:
-                print('лох')
+                print('Faces not Matched') #вывод лица не совпали
         else:
             g = 0
-            print('no face')
-
-#pixels = extract_face('Face_Nek2.JPG')
-
-
-#pyplot.imshow(pixels)
-
-#pyplot.show()
-
-#pixels = extract_face('Face_Nek.JPG')
-
-#pyplot.imshow(pixels)
-
-#pyplot.show()
+            print('no face') #вывод лицо не найдено
