@@ -71,7 +71,7 @@ while True:
     for i in files:
         l = pyplot.imread('./FACE0/' + i)  #из названия получает саму фотку
         faces = [extract_face(faceimg)
-                 for faceimg in [frame, l]]  #отправляет кадр и фото из папки в функцию extract_face
+                 for faceimg in [frame, l]]  #отправляет кадр и фото из папки в функцию extract_face()
         #print(faces)
         #print(faces[0])
         #if None not in faces:
