@@ -1,0 +1,108 @@
+import cv2
+import os
+from matplotlib import pyplot
+from PIL import Image
+from numpy import asarray
+from mtcnn.mtcnn import MTCNN
+from keras_vggface.utils import preprocess_input
+from keras_vggface.vggface import VGGFace
+cv2.startWindowThread()
+cap = cv2.VideoCapture(0)
+from scipy.spatial.distance import cosine
+from matplotlib import pyplot as plt
+out = cv2.VideoWriter(
+    'output.avi',
+    cv2.VideoWriter_fourcc(*'MJPG'),
+    15.,
+    (640, 480))
+
+
+# extract a single face from a given photograph
+def extract_face(faceimg, required_size=(224, 224)):
+    global g
+    print(type(faceimg))
+        #if type(faceimg) == str:
+            #pixels = pyplot.imread(faceimg)
+        #else:
+    pixels = faceimg
+    detector = MTCNN()
+
+    results = detector.detect_faces(pixels)
+    if results != []:
+        x1, y1, width, height = results[0]['box']
+        x2, y2 = x1 + width, y1 + height
+
+        face = pixels[y1:y2, x1:x2]
+
+        image = Image.fromarray(face)
+        image = image.resize(required_size)
+        face_array = asarray(image)
+        return face_array
+    else:
+        face = pixels[0:1, 0:1]
+
+        image = Image.fromarray(face)
+        image = image.resize(required_size)
+        face_array = asarray(image)
+        g = 1
+        return face_array
+
+def get_model_scores(faces):
+    global g
+    if faces != []:
+
+        samples = asarray(faces, 'float32')
+
+        # prepare the data for the model
+        samples = preprocess_input(samples, version=2)
+
+        # create a vggface model object
+        model = VGGFace(model='resnet50',
+          include_top=False,
+          input_shape=(224, 224, 3),
+          pooling='avg')
+
+        # perform prediction
+        return model.predict(samples)
+
+while True:
+    g = 0
+    img, frame = cap.read()
+    #out.write(frame.astype('uint8'))
+    #pixels = extract_face(frame)
+    directory = 'FACE0'
+    files = os.listdir(directory)
+    print(files)
+    for i in files:
+        l = pyplot.imread('./FACE0/' + i)
+        faces = [extract_face(faceimg)
+                 for faceimg in [frame, l]]
+        #print(faces)
+        #print(faces[0])
+        #if None not in faces:
+        #help = faces[0]
+        #print(help)
+        #help2 = faces[1]
+        #print(help2)
+        if g != 1:
+            model_scores = get_model_scores(faces)
+            if cosine(model_scores[0], model_scores[1]) <= 0.4:
+                print("Faces Matched")
+            else:
+                print('лох')
+        else:
+            g = 0
+            print('no face')
+
+#pixels = extract_face('Face_Nek2.JPG')
+
+
+#pyplot.imshow(pixels)
+
+#pyplot.show()
+
+#pixels = extract_face('Face_Nek.JPG')
+
+#pyplot.imshow(pixels)
+
+#pyplot.show()
